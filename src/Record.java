@@ -25,6 +25,11 @@ public class Record<T> {
     private T target;
 
     /**
+     * A non negative finite value, describing the weight of this Record.
+     */
+    private double weight;
+
+    /**
      * Creates a Record, given its Feature's' and target value.
      * @param features The Feature's' of this Record.
      * @param target The target value of this Record. Can be null, to indicate
