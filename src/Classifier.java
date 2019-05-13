@@ -45,4 +45,14 @@ public interface Classifier<Y> {
      */
     @NotNull Y predict(@NotNull Record<Y> record);
 
+    /**
+     * Gets the sum of the weights of all the training Record's' of this
+     * Classifier, that were incorrectly classified in the training phase/
+     * construction of this Classifier.
+     * @return The sum of the weights of all the training Record's' of this
+     * Classifier, that were incorrectly classified in the training phase/
+     * construction of this Classifier.
+     */
+    double getError();
+
 }//end interface Classifier

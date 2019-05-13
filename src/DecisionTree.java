@@ -103,4 +103,17 @@ public class DecisionTree<T> implements Classifier<T> {
         return node.dominantTarget();
     }
 
+    /**
+     * Gets the sum of the weights of all the training Record's' of this
+     * DecisionTree, that were incorrectly classified in the training phase/
+     * construction of this DecisionTree.
+     * @return The sum of the weights of all the training Record's' of this
+     * DecisionTree, that were incorrectly classified in the training phase/
+     * construction of this DecisionTree.
+     */
+    @Override
+    public double getError() {
+        throw new UnsupportedOperationException();
+    }
+
 }//end class DecisionTree
