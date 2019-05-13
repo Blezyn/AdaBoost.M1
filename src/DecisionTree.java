@@ -7,7 +7,7 @@ import java.util.Collection;
  * @param <T> The type of the output variable (class/category) of the Record's'
  * of this DecisionTree.
  */
-public class DecisionTree<T> {
+public class DecisionTree<T> implements Classifier<T> {
 
     /**
      * The root Node of this DecisionTree.
@@ -59,10 +59,34 @@ public class DecisionTree<T> {
     }
 
     /**
+     * Creates a decision tree on a given Collection of data. After this
+     * constructor ends, the tree is trained, and ready to receive
+     * classification queries.
+     * @param records A Collection with all the training data, to construct this
+     * DecisionTree. All the given Record's' must have a non-null target value.
+     * All the given data in case of String's' or Char's', are case sensitive,
+     * i.e. "path", "PATH", "pAtH" are all considered different values. The type
+     * of all the same Feature's' must be the same, otherwise this DecisionTree
+     * will have undefined results.
+     * @param minNodeCapacity The minimum number of Record's' a Node of this
+     * DecisionTree can have.
+     * @param maxDepth The maximum depth this DecisionTree will have.
+     * @throws IllegalArgumentException If records.isEmpty() == true.
+     * @throws IllegalArgumentException If minNodeCapacity <= 0.
+     * @throws IllegalArgumentException If records.size() < minNodeCapacity.
+     * @throws IllegalArgumentException if maxDepth < 1.
+     */
+    public DecisionTree(@NotNull Collection<Record<T>> records,
+            int minNodeCapacity, int maxDepth) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Predicts/Classifies the output value of a given record.
      * @param record A record to predict its output value.
      * @return The predicted output value of the given Record.
      */
+    @Override
     public @NotNull T predict(@NotNull Record<T> record) {
         //The target Node, to make the prediction
         Node<T> node = this.root;

@@ -178,4 +178,18 @@ public class Node<T> {
         }//end for
     }
 
+    /**
+     * Splits this Node, based on a Feature that will give the maximum
+     * information gain. After that, automatically splits its child Node's' too.
+     * If this Node is already split or the maximum depth has been reached, i.e.
+     * maxDepth < 1, this method does nothing.
+     * @param minCapacity The minimum number of Record's' a Node must have,
+     * after a split.
+     * @param maxDepth The maximum depth the underlying tree of the splits will
+     * have.
+     */
+    public void split(final int minCapacity, int maxDepth) {
+        throw new UnsupportedOperationException();
+    }
+
 }//end class Node

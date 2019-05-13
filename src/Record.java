@@ -54,6 +54,23 @@ public class Record<T> {
     }
 
     /**
+     * Creates a Record, given its Feature's', target value and weight.
+     * @param features The Feature's' of this Record.
+     * @param target The target value of this Record. Can be null, to indicate
+     * that this Record has no target value. It is useful for creating Record's'
+     * that need to be classified.
+     * @param weight A non negative finite value, describing the weight of this
+     * Record.
+     * @throws IllegalArgumentException If features.isEmpty() == true.
+     * @throws IllegalArgumentException If weight is not finite.
+     * @throws IllegalArgumentException If weight < 0.0.
+     */
+    public Record(@NotNull Collection<Feature<?>> features,
+            @Nullable T target, double weight) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Gets an unmodifiable Map, with the Feature's' of this Record, keyed by
      * their title.
      * @return An unmodifiable Map, with the Feature's' of this Record, keyed by
@@ -72,6 +89,34 @@ public class Record<T> {
      */
     public @Nullable T getTarget() {
         return this.target;
+    }
+
+    /**
+     * Indicates if this Record has a target value.
+     * @return True if this Record has a target value, otherwise false.
+     */
+    public boolean hasTarget() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Gets the weight of this Record.
+     * @return A non negative finite value, describing the weight of this
+     * Record.
+     */
+    public double getWeight() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Sets the weight of this Record.
+     * @param weight A non negative finite value, describing the new weight of
+     * this Record.
+     * @throws IllegalArgumentException If weight is not finite.
+     * @throws IllegalArgumentException If weight < 0.0.
+     */
+    public void setWeight(double weight) {
+        throw new UnsupportedOperationException();
     }
 
 }//end class Record
