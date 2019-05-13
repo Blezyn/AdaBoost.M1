@@ -10,12 +10,12 @@ import java.util.Objects;
 public class FiniteRange<T extends Comparable<T>> extends Range<T> {
 
     /**
-     * The lower (included) bound of this FiniteRange.
+     * The lower bound of this FiniteRange.
      */
     private T low;
 
     /**
-     * The upper (included) bound of this FiniteRange.
+     * The upper bound of this FiniteRange.
      */
     private T high;
 
