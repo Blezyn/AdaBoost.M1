@@ -56,8 +56,7 @@ public class Node<T> {
      * @return The child Node to branch to, or null if there is no mapping for
      * to a child Node for the given value.
      */
-    public @Nullable
-    Node<T> branch(@NotNull Comparable value) {
+    public @Nullable Node<T> branch(@NotNull Comparable value) {
         //Gets the Range's' of the branching Feature of this Node
         Set<SemiRange<?>> ranges = this.table.getRanges().get(
                 this.featureTitle);
@@ -90,8 +89,7 @@ public class Node<T> {
      * @return The title of the Feature this Node branches based on, or null if
      * this Node is a leaf node.
      */
-    public @Nullable
-    String getFtrTitle() {
+    public @Nullable String getFtrTitle() {
         return this.featureTitle;
     }
 
@@ -119,8 +117,7 @@ public class Node<T> {
      * Gets a Collection with all the child Nodes of this node.
      * @return An unmodifiable Collection with all the child Nodes of this node.
      */
-    public @NotNull
-    Collection<Node<T>> getChildNodes() {
+    public @NotNull Collection<Node<T>> getChildNodes() {
         return Collections.unmodifiableCollection(this.childNodes.values());
     }
 

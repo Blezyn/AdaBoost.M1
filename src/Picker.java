@@ -130,9 +130,9 @@ public class Picker<T> {
         //Calculates the sum of the values of all the keys that have a non
         //0.0 value
         double sum = this.map
-                .parallelStream()
-                .mapToDouble(Map.Entry::getValue)
-                .sum();
+                         .parallelStream()
+                         .mapToDouble(Map.Entry::getValue)
+                         .sum();
         //Populates this.addRelFreq array, by calculating the relative
         //frequency, based on the values of every key that has non 0.0
         //value. Starts from index 1 in this.addRelFreq, as index 0 has
