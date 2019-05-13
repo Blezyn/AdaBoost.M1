@@ -11,6 +11,17 @@ import java.util.Collection;
 public interface Classifier<Y> {
 
     /**
+     * Indicates if this Classifier, classifies correctly a given Record.
+     * @param record A Record to check if this Classifier classifies it
+     * correctly. It must contain a target value.
+     * @return True if this Classifier correctly classifies the given Record,
+     * otherwise false.
+     */
+    default boolean isCorrect(@NotNull Record<Y> record) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
      * Calculates the percentage of the given Record's' that were successfully
      * classified by this Classifier.
      * @param records A Collection of Record's' to be classified by this
