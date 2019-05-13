@@ -94,26 +94,14 @@ public class DecisionTree<T> implements Classifier<T> {
         //for a given value of the examined Feature
         while (node.getFtrTitle() != null) {
             //Gets the value of the examined Feature in node, of record
-            Comparable value = record.getFeatures().get(node.getFtrTitle()).getData();
+            Comparable value = record.getFeatures().get(
+                    node.getFtrTitle()).getData();
             //The next Node to branch to, based on the value of the given Record
             //on the Feature examined by node
             node = node.branch(value);
         }//end while
 
         return node.dominantTarget();
-    }
-
-    /**
-     * Gets the sum of the weights of all the training Record's' of this
-     * DecisionTree, that were incorrectly classified in the training phase/
-     * construction of this DecisionTree.
-     * @return The sum of the weights of all the training Record's' of this
-     * DecisionTree, that were incorrectly classified in the training phase/
-     * construction of this DecisionTree.
-     */
-    @Override
-    public double getError() {
-        throw new UnsupportedOperationException();
     }
 
 }//end class DecisionTree
