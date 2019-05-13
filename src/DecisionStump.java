@@ -10,8 +10,8 @@ import java.util.Collection;
 public class DecisionStump<Y> extends DecisionTree<Y> {
 
     /**
-     * Creates a decision tree on a given Collection of data. After this
-     * constructor ends, the tree is trained, and ready to receive
+     * Creates a DecisionStump on a given Collection of data. After this
+     * constructor ends, the DecisionStump is trained, and ready to receive
      * classification queries.
      * @param records A Collection of Record's' to be classified by this
      * DecisionStump. They must contain their target values.
