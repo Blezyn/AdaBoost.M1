@@ -30,7 +30,8 @@ public class Record<T> {
     private double weight;
 
     /**
-     * Creates a Record, given its Feature's' and target value.
+     * Creates a Record, given its Feature's' and target value. Its weight will
+     * be 1.0.
      * @param features The Feature's' of this Record.
      * @param target The target value of this Record. Can be null, to indicate
      * that this Record has no target value. It is useful for creating Record's'
@@ -39,23 +40,7 @@ public class Record<T> {
      */
     public Record(@NotNull Collection<Feature<?>> features,
             @Nullable T target) {
-        //Validates that features Collections contains at least 1 element
-        if (features.isEmpty()) {
-            throw new IllegalArgumentException("Argument Collection features " +
-                    "must contain at least 1 element.");
-        }//end if
-
-        //Creates a Map with the features/attributes of this Record, keyed by
-        //their title.
-        Map<String, Feature<?>> featureMap = new HashMap<>(features.size());
-        //Populates featureMap
-        for (Feature<?> f : features) {
-            //Puts Feature f in featureMap
-            featureMap.put(f.getTitle(), f);
-        }//end for
-
-        this.features = featureMap;
-        this.target = target;
+        this(features, target, 1.0);
     }
 
     /**
@@ -72,7 +57,36 @@ public class Record<T> {
      */
     public Record(@NotNull Collection<Feature<?>> features,
             @Nullable T target, double weight) {
-        throw new UnsupportedOperationException();
+        //Validates that features Collections contains at least 1 element
+        if (features.isEmpty()) {
+            throw new IllegalArgumentException("Argument Collection features " +
+                    "must contain at least 1 element.");
+        }//end if
+
+        //Validates that weight is finite
+        if (!Double.isFinite(weight)) {
+            throw new IllegalArgumentException("Argument weight must be " +
+                    "finite.");
+        }//end if
+
+        //Validates that weight >= 0.0
+        if (weight < 0.0) {
+            throw new IllegalArgumentException("Argument weight can't be " +
+                    "negative.");
+        }//end if
+
+        //Creates a Map with the features/attributes of this Record, keyed by
+        //their title.
+        Map<String, Feature<?>> featureMap = new HashMap<>(features.size());
+        //Populates featureMap
+        for (Feature<?> f : features) {
+            //Puts Feature f in featureMap
+            featureMap.put(f.getTitle(), f);
+        }//end for
+
+        this.features = featureMap;
+        this.target = target;
+        this.weight = weight;
     }
 
     /**
@@ -110,7 +124,7 @@ public class Record<T> {
      * Record.
      */
     public double getWeight() {
-        throw new UnsupportedOperationException();
+        return this.weight;
     }
 
     /**

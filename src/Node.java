@@ -137,8 +137,48 @@ public class Node<T> {
      * after a split.
      */
     public void split(final int minCapacity) {
+        this.split(minCapacity, Double.POSITIVE_INFINITY);
+    }
+
+    /**
+     * Splits this Node, based on a Feature that will give the maximum
+     * information gain. After that, automatically splits its child Node's' too.
+     * If this Node is already split or the maximum depth has been reached, i.e.
+     * maxDepth < 1, this method does nothing.
+     * @param minCapacity The minimum number of Record's' a Node must have,
+     * after a split.
+     * @param maxDepth The maximum depth the underlying tree of the splits will
+     * have.
+     */
+    public void split(final int minCapacity, int maxDepth) {
+        this.split(minCapacity, (double) maxDepth);
+    }
+
+    /**
+     * Splits this Node, based on a Feature that will give the maximum
+     * information gain. After that, automatically splits its child Node's' too.
+     * If this Node is already split or the maximum depth has been reached, i.e.
+     * maxDepth < 1, this method does nothing.
+     * @param minCapacity The minimum number of Record's' a Node must have,
+     * after a split.
+     * @param maxDepth The maximum depth the underlying tree of the splits will
+     * have. It is of type double, in order to support infinite values.
+     * @throws IllegalArgumentException If Double.isNaN(maxDepth).
+     */
+    private void split(final int minCapacity, double maxDepth) {
+        //Validates that maxDepth is not NaN
+        if (Double.isNaN(maxDepth)) {
+            throw new IllegalArgumentException("Argument maxDepth can't be " +
+                    "NaN.");
+        }//end if
+
         //Checks if this Node is already split
         if (!this.childNodes.isEmpty()) {
+            return;
+        }//end if
+
+        //Checks if the maximum depth has been reached
+        if (maxDepth < 1) {
             return;
         }//end if
 
@@ -171,22 +211,8 @@ public class Node<T> {
         //Splits the child Node's' on their optimal Feature
         for (Map.Entry<Object, Node<T>> e : this.childNodes.entrySet()) {
             //Splits the current child Node on its optimal Feature
-            e.getValue().split(minCapacity);
+            e.getValue().split(minCapacity, maxDepth - 1);
         }//end for
-    }
-
-    /**
-     * Splits this Node, based on a Feature that will give the maximum
-     * information gain. After that, automatically splits its child Node's' too.
-     * If this Node is already split or the maximum depth has been reached, i.e.
-     * maxDepth < 1, this method does nothing.
-     * @param minCapacity The minimum number of Record's' a Node must have,
-     * after a split.
-     * @param maxDepth The maximum depth the underlying tree of the splits will
-     * have.
-     */
-    public void split(final int minCapacity, int maxDepth) {
-        throw new UnsupportedOperationException();
     }
 
 }//end class Node

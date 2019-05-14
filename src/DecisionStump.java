@@ -18,7 +18,7 @@ public class DecisionStump<Y> extends DecisionTree<Y> {
      * @throws IllegalArgumentException If records.isEmpty() == true.
      */
     public DecisionStump(@NotNull Collection<Record<Y>> records) {
-        throw new UnsupportedOperationException();
+        super(records, 1, 1);
     }
 
 }//end class DecisionStump
