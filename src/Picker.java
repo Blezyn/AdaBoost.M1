@@ -30,7 +30,7 @@ public class Picker<T> {
         //Performs binary search to find the index of the floor value of target
         while (l <= h) {
             //Calculates the center of the search region, rounded down
-            m = (l + h) / 2;
+            m = l + (h - l) / 2;
             //Finds which border to change, in order to limit the search range
             if (arr[m] < target) {
                 l = m + 1;
