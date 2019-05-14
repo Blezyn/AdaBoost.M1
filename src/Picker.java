@@ -14,7 +14,7 @@ public class Picker<T> {
      * Finds the index of the floor value of a given target value from a non
      * decreasing ordered array.
      * @param arr An ordered non decreasing array.
-     * @param target The target value to finds its floor inside the given array.
+     * @param target The target value to find its floor inside the given array.
      * By floor, means the largest value inside the array that is <= target.
      * @return The index of the floor value of the given target. By floor, means
      * the largest value inside the array that is <= target. If no such value
