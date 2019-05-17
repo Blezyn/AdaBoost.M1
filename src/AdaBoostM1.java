@@ -21,7 +21,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
      * model, will use for prediction.
      */
     public AdaBoostM1(@NotNull Collection<Record<Y>> records,
-            ClassifierGenerator<Y> classifierGen, int maxModels) {
+            @NotNull ClassifierGenerator<Y> classifierGen, int maxModels) {
         throw new UnsupportedOperationException();
     }
 
