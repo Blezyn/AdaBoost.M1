@@ -1,6 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -118,13 +119,14 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
 
     /**
      * Predicts/Classifies the output value of a given Record.
-     * @implSpec The log() function was dropped in the calculation of the final
-     * argmax, for performance reasons, as it is a strictly increasing function.
      * @param record A Record to predict its output value.
      * @return The predicted output value of the given Record.
      */
     @Override
     public @NotNull Y predict(@NotNull Record<Y> record) {
+        //A Function that represents a logarithm of any base
+        BiFunction<Double, Double, Double> logb = (x, b) -> Math.log(x) /
+                Math.log(b);
         return this.classifiers
                    .parallelStream()
                    .map(e -> new AbstractMap.SimpleEntry<>(e,
@@ -147,6 +149,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                            e.getValue()
                             .parallelStream()
                             .mapToDouble(Map.Entry::getValue)
+                            .map(w -> logb.apply(w, 2.0))
                             .sum()))
                    .max(Comparator.comparingDouble(Map.Entry::getValue))
                    .get()
