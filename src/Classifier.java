@@ -35,7 +35,22 @@ public interface Classifier<Y> {
      * Collection, that does not have a target value.
      */
     default double successRate(@NotNull Collection<Record<Y>> records) {
-        throw new UnsupportedOperationException();
+        //Validates that all the given Records have a target value
+        for (Record<Y> r : records) {
+            //Checks if Record r does not have a target value
+            if (!r.hasTarget()) {
+                throw new IllegalArgumentException("Argument Collection " +
+                        "records must contain only Record's' that have their " +
+                        "target value.");
+            }//end if
+        }//end for
+
+        int sum = records.size();
+        int success=0;
+        for (Record<Y> e:records ){
+            if (this.isCorrect(e)){success ++;}
+        }
+        return  (double) success / sum;
     }
 
     /**
