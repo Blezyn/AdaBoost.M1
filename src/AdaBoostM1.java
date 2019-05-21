@@ -124,7 +124,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
      */
     @Override
     public @NotNull Y predict(@NotNull Record<Y> record) {
-        //A Function that represents a logarithm of any base
+        //A Function: R^2 -> R, that represents a logarithm of any base
         BiFunction<Double, Double, Double> logb = (x, b) -> Math.log(x) /
                 Math.log(b);
         return this.classifiers
