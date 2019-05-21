@@ -118,6 +118,8 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
 
     /**
      * Predicts/Classifies the output value of a given Record.
+     * @implSpec The log() function was dropped in the calculation of the final
+     * argmax, for performance reasons, as it is a strictly increasing function.
      * @param record A Record to predict its output value.
      * @return The predicted output value of the given Record.
      */
