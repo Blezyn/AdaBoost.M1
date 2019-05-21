@@ -106,7 +106,7 @@ public class DecisionTree<T> implements Classifier<T> {
 
         Node<T> root = new Node<>(new Table<>(records));
         //Trains this DecisionTree
-        root.split(minNodeCapacity);
+        root.split(minNodeCapacity, maxDepth);
 
         this.root = root;
     }

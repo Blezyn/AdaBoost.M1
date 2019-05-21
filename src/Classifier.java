@@ -19,7 +19,7 @@ public interface Classifier<Y> {
      */
     default boolean isCorrect(@NotNull Record<Y> record) {
 
-        return record.getTarget() == predict(record);
+        return record.getTarget().equals(predict(record));
     }
 
     /**
