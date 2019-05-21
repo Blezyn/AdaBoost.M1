@@ -18,7 +18,8 @@ public interface Classifier<Y> {
      * otherwise false.
      */
     default boolean isCorrect(@NotNull Record<Y> record) {
-        throw new UnsupportedOperationException();
+
+        return record.getTarget() == predict(record);
     }
 
     /**
