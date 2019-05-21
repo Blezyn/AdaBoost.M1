@@ -115,7 +115,7 @@ public class Record<T> {
      * @return True if this Record has a target value, otherwise false.
      */
     public boolean hasTarget() {
-        throw new UnsupportedOperationException();
+        return getTarget() != null;
     }
 
     /**
@@ -135,7 +135,21 @@ public class Record<T> {
      * @throws IllegalArgumentException If weight < 0.0.
      */
     public void setWeight(double weight) {
-        throw new UnsupportedOperationException();
+
+        //Validates that weight is finite
+        if (!Double.isFinite(weight)) {
+            throw new IllegalArgumentException("Argument weight must be " +
+                    "finite.");
+        }//end if
+
+        //Validates that weight >= 0.0
+        if (weight < 0.0) {
+            throw new IllegalArgumentException("Argument weight can't be " +
+                    "negative.");
+        }//end if
+
+        this.weight = weight;
+
     }
 
 }//end class Record

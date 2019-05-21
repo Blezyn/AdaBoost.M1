@@ -78,7 +78,37 @@ public class DecisionTree<T> implements Classifier<T> {
      */
     public DecisionTree(@NotNull Collection<Record<T>> records,
             int minNodeCapacity, int maxDepth) {
-        throw new UnsupportedOperationException();
+
+        //Validates that records Collection contains at least 1 element
+        if (records.isEmpty()) {
+            throw new IllegalArgumentException("Argument records Collection " +
+                    "must contain at least 1 element.");
+        }//end if
+
+        //Validates that minNodeCapacity > 0
+        if (minNodeCapacity <= 0) {
+            throw new IllegalArgumentException("Argument minNodeCapacity " +
+                    "must be <= the minimum number of Records .");
+        }//end if
+
+        //Validates that records.size() > minNodeCapacity
+        if (records.size() < minNodeCapacity) {
+            throw new IllegalArgumentException("Argument minNodeCapacity " +
+                    "must be > 0.");
+        }//end if
+
+        //Validates that  maxDepth >= 1
+        if (maxDepth < 1) {
+            throw new IllegalArgumentException("Argument maxDepth " +
+                    "must be >= 1.");
+        }//end if
+
+
+        Node<T> root = new Node<>(new Table<>(records));
+        //Trains this DecisionTree
+        root.split(minNodeCapacity);
+
+        this.root = root;
     }
 
     /**
