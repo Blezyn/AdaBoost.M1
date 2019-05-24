@@ -30,6 +30,27 @@ public class Record<T> {
     private double weight;
 
     /**
+     * Performs a shallow copy on a given Record.
+     * @param prototype A Record to shallow copy it.
+     * @param <T> The type of the prototype Record.
+     * @return A shallow copy of the given prototype Record.
+     */
+    public static <T> @NotNull Record<T> shallowCopy(
+            @NotNull Record<T> prototype) {
+        return new Record<>(prototype);
+    }
+
+    /**
+     * Creates a shallow copy Record from a given Record.
+     * @param prototype A Record to shallow copy it.
+     */
+    private Record(@NotNull Record<T> prototype) {
+        this.features = prototype.features;
+        this.target = prototype.target;
+        this.weight = prototype.weight;
+    }
+
+    /**
      * Creates a Record, given its Feature's' and target value. Its weight will
      * be 1.0.
      * @param features The Feature's' of this Record.

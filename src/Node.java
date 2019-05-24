@@ -94,6 +94,26 @@ public class Node<T> {
     }
 
     /**
+     * Finds the dominant (based on weights) target value of the Table of this
+     * Node. Breaks ties arbitrary.
+     * @return The dominant (based on weights) target value of the Table of this
+     * Node or an arbitrary one, if there are more than 1 with the same
+     * frequency.
+     */
+    public @NotNull T dominantWTarget() {
+        return this.table
+                   .getRecords()
+                   .stream()
+                   .collect(Collectors.toMap(Record::getTarget,
+                           Record::getWeight, Double::sum, LinkedHashMap::new))
+                   .entrySet()
+                   .stream()
+                   .max(Comparator.comparing(Map.Entry::getValue))
+                   .get()
+                   .getKey();
+    }
+
+    /**
      * Finds the dominant (most frequent) target value of the Table of this
      * Node. Breaks ties arbitrary.
      * @return The dominant (most frequent) target value of the Table of this

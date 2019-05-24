@@ -24,6 +24,39 @@ public class Table<T> {
     private Map<String, Set<SemiRange<?>>> ranges;
 
     /**
+     * Calculates the weighted entropy of the target variable of a Stream of
+     * Records.
+     * @return The weighted entropy of the target variable of a Stream of
+     * Records.
+     */
+    private static <T> double weightedEntropy(
+            @NotNull Stream<Record<T>> records) {
+        //The entropy of this Table, for the target values
+        double entropy = 0.0;
+        //A Map with all the unique values of the target variable of the
+        //Record's' of records Stream as its keys and the sum of their weights
+        //as its values
+        Map<T, Double> weights = records.collect(Collectors.toMap(
+                Record::getTarget, Record::getWeight, Double::sum,
+                LinkedHashMap::new));
+        //The sum of the weights of all the Record's' in weights Map
+        final double SUM = weights.entrySet()
+                                  .stream()
+                                  .mapToDouble(Map.Entry::getValue)
+                                  .sum();
+
+        //Calculates the entropy
+        for (Map.Entry<?, Double> e : weights.entrySet()) {
+            //Calculates the relative frequency of the current value
+            double relFreq = e.getValue() / SUM;
+            //Subtracts the term of the current value from the entropy
+            entropy -= relFreq * (Math.log(relFreq) / Math.log(2.0));
+        }//end for
+
+        return entropy;
+    }
+
+    /**
      * Calculates the entropy of the target variable of a Stream of Records.
      * @return The entropy of the target variable of a Stream of Records.
      */
@@ -140,7 +173,9 @@ public class Table<T> {
                     highRange)));
         }//end for
 
-        this.records = new ArrayList<>(records);
+        this.records = records.parallelStream()
+                              .map(Record::shallowCopy)
+                              .collect(Collectors.toList());
         this.ranges = ranges;
     }
 
@@ -202,7 +237,7 @@ public class Table<T> {
                              .entrySet()
                              .parallelStream()
                              .map(e -> new Tuple<>(e.getKey(),
-                                     this.infoGain(e.getKey())))
+                                     this.weightedInfoGain(e.getKey())))
                              .max(Comparator.comparing(x -> x.b))
                              .get()
                              .a;
@@ -341,6 +376,71 @@ public class Table<T> {
                    .map(r -> r.getFeatures().get(ftrTitle).getData())
                    .filter(e -> e.equals(value))
                    .count();
+    }
+
+    /**
+     * Calculates the information gain of splitting this Table by the given
+     * Feature, based on the weights of the Record's'.
+     * @param ftrTitle The title of the Feature to calculate its information
+     * gain on split.
+     * @return The information gain of splitting this Table by the given
+     * Feature, based on the weights of the Record's'.
+     */
+    private double weightedInfoGain(@NotNull String ftrTitle) {
+        //The entropy of this Table, for the target value of its Records.
+        double entropy = Table.weightedEntropy(this.records.parallelStream());
+
+        //Gets the Range's' of the given Feature
+        Set<SemiRange<?>> ranges = this.ranges.get(ftrTitle);
+        //Checks if the given Feature contains continuous values
+        if (ranges != null) {
+            //The information gain of splitting
+            double infoGain = entropy;
+            //Calculates the information gain
+            for (SemiRange sr : ranges) {
+                //Calculates the relative frequency of the items that are
+                //contained in SemiRange sr
+                double relFreq = sr.isBoundInc() ? (this.records.size() + 2) /
+                        2.0 : this.records.size() - (this.records.size() + 2) /
+                        2.0;
+                //Subtracts the term of SemiRange sr from infoGain
+                infoGain -= relFreq * Table.weightedEntropy(
+                        this.records
+                            .parallelStream()
+                            .filter(r -> sr.contains(r.getFeatures()
+                                                      .get(ftrTitle)
+                                                      .getData())));
+            }//end for
+
+            return infoGain;
+        }//end if
+
+        //A Set with all the values of the given Feature, in the Record's' of
+        //this Table.
+        Set<?> ftrValues = this.ftrValues(ftrTitle);
+        //A Map with the the entropy of this Table, on its target variable, if
+        //split by each value in ftrValues
+        Map<Object, Double> entropies = new LinkedHashMap<>(ftrValues.size());
+        //Populates entropies Map
+        for (Object v : ftrValues) {
+            entropies.put(v, Table.weightedEntropy(this.records
+                     .parallelStream()
+                     .filter(r -> r.getFeatures()
+                                  .get(ftrTitle)
+                                  .getData()
+                                  .equals(v))));
+        }//end for
+
+        //The information gain of splitting
+        double infoGain = entropy;
+        //Calculates the information gain
+        for (Map.Entry<Object, Double> e : entropies.entrySet()) {
+            //Subtracts the term of e.getKey() from infoGain
+            infoGain -= ((double) this.ftrValueFreq(ftrTitle, e.getKey()) /
+                    this.records.size()) * e.getValue();
+        }//end for
+
+        return infoGain;
     }
 
     /**

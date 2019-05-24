@@ -47,6 +47,23 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
         //1.0
         Consumer<Collection<Record<Y>>> shareWeights = c -> c.parallelStream()
                 .forEach(r -> r.setWeight(1.0 / c.size()));
+        //A Consumer that takes a Collection of Record's' and normalizes their
+        //weights to form a distribution, while maintaining their relative
+        //weight information. The sum of the weights of all the Record's' will
+        //be 1.0
+        Consumer<Collection<Record<Y>>> normalize = c -> {
+            //Calculates the sum of the weights of all the Record's' in
+            //Collection c
+            final double SUM = c.parallelStream()
+                                .mapToDouble(Record::getWeight)
+                                .sum();
+            //Normalizes all the weights
+            c.parallelStream()
+             .forEach(r -> r.setWeight(r.getWeight() / SUM));
+        };
+
+        //Shares evenly the weights of the records Collection
+        shareWeights.accept(records);
         //A List with Classifier's' for this AdaBoostM1, along with their weight
         //for the final prediction stage.
         List<Map.Entry<Classifier<Y>, Double>> classifiers =
@@ -56,8 +73,6 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
 
         //Populates classifiers List with Classifier's'
         for (int modelNum = 1; modelNum <= maxModels; ++modelNum) {
-            //Shares evenly the weights of the records Collection
-            shareWeights.accept(records);
             //Gets a Classifier from Record's' records
             Classifier<Y> classifier = classifierGen.generate(records);
             //A Set with all the Record's' that classifier correctly predicted
@@ -65,14 +80,18 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
             Set<Record<Y>> correctRecords = records.stream()
                     .filter(classifier::isCorrect)
                     .collect(Collectors.toSet());
+            System.out.println("RECORDS: " + records.size());
+            System.out.println("CORRECT RECORDS: " + correctRecords.size());
             //The weighted error of Classifier classifier, at its prediction of
             //Record's' records
             double error = records.parallelStream()
-                                  .mapToDouble(r -> correctRecords.contains(r) ?
-                                          0.0 : r.getWeight())
+                                  .filter(correctRecords::contains)
+                                  .mapToDouble(Record::getWeight)
                                   .sum();
+            //System.out.println(error);
             //Checks if error is greater than the threshold 0.5
             if (error > 0.5) {
+                System.out.println("ERROR: " + error);
                 break;
             }//end if
 
@@ -91,21 +110,17 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
             records.parallelStream()
                    .filter(correctRecords::contains)
                    .forEach(r -> r.setWeight(r.getWeight() * INV_WEIGHT));
-            //Creates a Picker to sample Record's' out of records Collection,
-            //based on their weights. *There is no need to normalize the weights
-            //of the Record's' here, picker will do it for us
-            Picker<Record<Y>> picker = new Picker<>();
-            //A List with Map.Entry's' that contain a Record as their key and
-            //its weight as their value
-            List<Map.Entry<Record<Y>, Double>> entries = records
-                    .parallelStream()
-                    .map(r -> new AbstractMap.SimpleEntry<>(r, r.getWeight()))
-                    .collect(Collectors.toList());
-            //Updates records Collection with the new Record's'
-            records = IntStream.rangeClosed(1, records.size())
-                               .boxed()
-                               .map(i -> picker.pick(entries, rand))
-                               .collect(Collectors.toList());
+
+            records.forEach(r -> {
+                        System.out.println(correctRecords.contains(r));
+                        System.out.println(r.getWeight());
+                    });
+            System.out.println();
+            System.out.println();
+
+            //Normalizes the Record's'
+            normalize.accept(records);
+            //System.out.println("D: " + records.stream().distinct().count());
         }//end for
 
         //Validates that there is at least 1 weak classifier in classifiers List
@@ -114,6 +129,8 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                     "classifiers.");
         }//end if
 
+        System.out.println("SIZE: " + classifiers.size());
+        //System.out.println(classifiers.size());
         this.classifiers = classifiers;
     }
 
@@ -151,6 +168,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                             .mapToDouble(Map.Entry::getValue)
                             .map(w -> logb.apply(w, 2.0))
                             .sum()))
+                .peek(System.out::println)
                    .max(Comparator.comparingDouble(Map.Entry::getValue))
                    .get()
                    .getKey();
