@@ -80,26 +80,27 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
             Set<Record<Y>> correctRecords = records.stream()
                     .filter(classifier::isCorrect)
                     .collect(Collectors.toSet());
-            System.out.println("RECORDS: " + records.size());
-            System.out.println("CORRECT RECORDS: " + correctRecords.size());
+            //System.out.println("RECORDS: " + records.size());
+            //System.out.println("CORRECT RECORDS: " + correctRecords.size());
             //The weighted error of Classifier classifier, at its prediction of
             //Record's' records
-            double error = records.parallelStream()
-                                  .filter(correctRecords::contains)
+            double error = records.stream()
+                                  .filter(r -> !correctRecords.contains(r))
                                   .mapToDouble(Record::getWeight)
                                   .sum();
-            //System.out.println(error);
-            //Checks if error is greater than the threshold 0.5
-            if (error > 0.5) {
-                System.out.println("ERROR: " + error);
-                break;
-            }//end if
-
             //The weight^-1 of classifier in its final prediction stage
             final double INV_WEIGHT = error / (1.0 - error);
-            //Adds classifier in classifiers List, along with prediction weight
-            classifiers.add(new AbstractMap.SimpleEntry<>(classifier, 1.0 /
-                    INV_WEIGHT));
+            //Checks if error is greater than the threshold 0.5
+            if (error > 0.5) {
+                //continue; //break;
+                ++maxModels;
+            } else {
+                //Adds classifier in classifiers List, along with prediction weight
+                classifiers.add(new AbstractMap.SimpleEntry<>(classifier, 1.0 /
+                        INV_WEIGHT));
+            }//end if
+
+            //System.out.println("Error: " + error);
 
             //Checks if there are no more models to build
             if (modelNum == maxModels) {
@@ -111,12 +112,12 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                    .filter(correctRecords::contains)
                    .forEach(r -> r.setWeight(r.getWeight() * INV_WEIGHT));
 
-            records.forEach(r -> {
+            /*records.forEach(r -> {
                         System.out.println(correctRecords.contains(r));
                         System.out.println(r.getWeight());
                     });
             System.out.println();
-            System.out.println();
+            System.out.println();*/
 
             //Normalizes the Record's'
             normalize.accept(records);
@@ -130,6 +131,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
         }//end if
 
         System.out.println("SIZE: " + classifiers.size());
+        //System.out.println("----------------------------------------------");
         //System.out.println(classifiers.size());
         this.classifiers = classifiers;
     }
