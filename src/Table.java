@@ -1,5 +1,6 @@
 import org.jetbrains.annotations.NotNull;
 
+import javax.print.DocFlavor;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -10,6 +11,33 @@ import java.util.stream.Stream;
  * @param <T> The type of the output variable (class/category) of the Record's'.
  */
 public class Table<T> {
+
+    /**
+     * Represents a tuple of 2 objects.
+     */
+    private static class Tuple<A, R> {
+
+        /**
+         * The 1st object of this Tuple.
+         */
+        private A a;
+
+        /**
+         * The 2nd object of this Tuple.
+         */
+        private R b;
+
+        /**
+         * Creates a Tuple given its 2 objects.
+         * @param a The 1st object of this Tuple.
+         * @param b The 2nd object of this Tuple.
+         */
+        private Tuple(A a, R b) {
+            this.a = a;
+            this.b = b;
+        }
+
+    }//end local class Tuple
 
     /**
      * A List with all the records of this Table.
@@ -83,6 +111,144 @@ public class Table<T> {
     }
 
     /**
+     * Calculates the information gain of splitting this Table by the given
+     * Feature, based on the weights of the Record's'.
+     * @param ftrTitle The title of the Feature to calculate its information
+     * gain on split.
+     * @return The information gain of splitting this Table by the given
+     * Feature, based on the weights of the Record's'.
+     */
+    private static <T> double wInfoGain(@NotNull Collection<Record<T>> records,
+            @NotNull Set<SemiRange<?>> ranges, @NotNull String ftrTitle) {
+        //The entropy of this Table, for the target value of its Records.
+        double entropy = Table.weightedEntropy(records.parallelStream());
+
+        //Checks if the given Feature contains continuous values
+        if (ranges != null) {
+            //A Map with the the entropy of this Table, on its target variable, if
+            //split by each value in ftrValues
+            Map<Object, Double> entropies = new LinkedHashMap<>(ranges.size());
+            //The information gain of splitting
+            double infoGain = entropy;
+            //Calculates the information gain
+            for (SemiRange sr : ranges) {
+                entropies.put(sr, Table.weightedEntropy(records
+                        .parallelStream()
+                        .filter(r -> sr.contains(r.getFeatures()
+                                .get(ftrTitle)
+                                .getData()))));
+            }//end for
+
+            //Calculates the information gain
+            for (Map.Entry<Object, Double> e : entropies.entrySet()) {
+                //Subtracts the term of e.getKey() from infoGain
+                infoGain -= ftrValWFreq(records, ranges, ftrTitle,
+                        e.getKey()) * e.getValue();
+            }//end for
+
+            return infoGain;
+        }//end if
+
+        throw new RuntimeException();
+    }
+
+    /**
+     * Calculates the weighted frequency of a given value of a Feature, in the
+     * Record's' of this Table.
+     * @param ftrTitle The title of the Feature the given value belongs to.
+     * @param value A value of the given Feature.
+     * @return The weighted frequency of a given value of a Feature, in the
+     * Record's' of this Table. If there are no Record's' with the given value,
+     * or the value does not belong in the value set of the given Feature,
+     * returns 0.
+     */
+    private static <T> double ftrValWFreq(
+            @NotNull Collection<Record<T>> records,
+            @NotNull Set<SemiRange<?>> ranges,
+            @NotNull String ftrTitle,
+            @NotNull Object value) {
+        //The sum of the weights of all the Record's' of this Table
+        final double WEIGHT_SUM = records
+                .parallelStream()
+                .mapToDouble(Record::getWeight)
+                .sum();
+
+        //Checks if the given Feature contains continuous values
+        if (ranges != null) {
+            //A variable to store a reference to the SemiRange containing value
+            SemiRange range = (SemiRange) value;
+            //Iterates over ranges to find the one that contains value
+            /*for (SemiRange r : ranges) {
+                //Checks if r contains value
+                if (r.contains((Comparable) value)) {
+                    //Store a reference to r
+                    range = r;
+                    //No need to continue iteration
+                    break;
+                }//end if
+            }//end for
+
+            //To make the compiler happy, for lambda use
+            final SemiRange RANGE = range;*/
+            return records
+                    .parallelStream()
+                    .filter(r -> range.contains(r.getFeatures()
+                            .get(ftrTitle)
+                            .getData()))
+                    .mapToDouble(Record::getWeight)
+                    .sum() / WEIGHT_SUM;
+        }//end if
+
+        return records
+                .parallelStream()
+                .filter(r -> r.getFeatures()
+                        .get(ftrTitle)
+                        .getData()
+                        .equals(value))
+                .mapToDouble(Record::getWeight)
+                .sum() / WEIGHT_SUM;
+    }
+
+    /**
+     * Finds the optimal pivot from a List of continuous data.
+     * @param records A Collection with all the Record's' of a table.
+     * @param ftrTitle The title of the continuous Feature to pick its optimal
+     * pivot.
+     * @param <T> The type of the target variable in a Record.
+     * @return The optimal pivot element.
+     */
+    private static <T> Comparable<?> optPivot(
+            @NotNull Collection<Record<T>> records, @NotNull String ftrTitle) {
+        List<Comparable> values = records.parallelStream()
+                                            .map(r -> r.getFeatures()
+                                                       .get(ftrTitle)
+                                                       .getData())
+                                            .collect(Collectors.toList());
+        List<Tuple<Comparable<?>, Double>> data = new ArrayList<>(
+                values.size());
+        for (Comparable<?> v : values) {
+            SemiRange<?> lowRange = new SemiRange(v, false,
+                    true);
+            SemiRange<?> highRange = new SemiRange(v, true,
+                    false);
+            data.add(new Tuple<>(v, Table.wInfoGain(records, new HashSet<>(
+                    List.of(lowRange, highRange)), ftrTitle)));
+        }//end for
+
+        Comparable<?> c = data.parallelStream()
+                .max(Comparator.comparing(t -> t.b))
+                .get()
+                .a;
+        values.sort(Comparator.naturalOrder());
+        //System.out.printf("i: %d / %d%n", values.indexOf(c), values.size());
+
+        return data.parallelStream()
+                   .max(Comparator.comparing(t -> t.b))
+                   .get()
+                   .a;
+    }
+
+    /**
      * Creates a Table, given its Record's'.
      * @param records The Record's' of this Table. All the Record's' must be
      * consistent with each other, in the sense, that all of them must contain
@@ -111,6 +277,8 @@ public class Table<T> {
             }//end if
         }//end for
 
+        //System.out.println("Records size: " + records.size());
+
         //A Map with keys the title of a Feature and values a Set with the
         //SemiRange's' of that Feature column.
         Map<String, Set<SemiRange<?>>> ranges = new HashMap<>();
@@ -129,49 +297,21 @@ public class Table<T> {
                 continue;
             }//end if
 
-            //A List with the data of the current Feature, from all the
-            //Record's'
-            List<Comparable<?>> data = records.parallelStream()
-                                              .map(r -> r.getFeatures()
-                                                         .get(e.getKey())
-                                                         .getData())
-                                              .collect(Collectors.toList());
-            //Shuffles data List, to minimize the chance for the O(n * log2(n))
-            //worst case time, for finding its median with a PriorityQueue
-            Collections.shuffle(data);
-            //Creates a PriorityQueue with the first (records.size() + 2) / 2
-            //elements from data List, to find its median in Θ(n) average time.
-            //The generics are dropped here, as it is impossible for the
-            //compiler to tell if the capture<?> in comparing 2 Comparable<?> is
-            //the same
-            PriorityQueue<Comparable> pq = new PriorityQueue<>(data.subList(
-                    0, (data.size() + 2) / 2));
-            //Finds the (records.size() + 2) / 2 largest elements of data List,
-            //in pq PriorityQueue
-            for (Comparable d : data.subList((data.size() + 2) / 2,
-                    data.size())) {
-                //Checks if d is larger than the smallest element in pq
-                if (pq.element().compareTo(d) < 0) {
-                    //Removes the head (smallest element) of pq (min heap)
-                    pq.remove();
-                    //Adds d in pq
-                    pq.add(d);
-                }//end if
-            }//end for
-
-            //Gets the median of data List
-            Comparable<?> median = pq.element();
+            //Gets the pivot of data List
+            Comparable<?> pivot = Table.optPivot(records, e.getKey());
             //Partitions the continuous values of the current Feature into 2
             //SemiRange's'. The generics at instantiation are dropped, as the
             //compiler cannot infer them, because of the capture<?>
-            SemiRange<?> lowRange = new SemiRange(median, false,
+            SemiRange<?> lowRange = new SemiRange(pivot, false,
                     true);
-            SemiRange<?> highRange = new SemiRange(median, true,
+            SemiRange<?> highRange = new SemiRange(pivot, true,
                     false);
             //Puts them in ranges Map, keyed by the title of the current Feature
             ranges.put(e.getKey(), new HashSet(Arrays.asList(lowRange,
                     highRange)));
         }//end for
+
+        //Map<Record<T>, Double> weights
 
         this.records = records.parallelStream()
                               .map(Record::shallowCopy)
@@ -204,33 +344,6 @@ public class Table<T> {
      */
     public @NotNull
     String optimalFeature() {
-        /**
-         * Represents a tuple of 2 objects.
-         */
-        class Tuple<A, R> {
-
-            /**
-             * The 1st object of this Tuple.
-             */
-            private A a;
-
-            /**
-             * The 2nd object of this Tuple.
-             */
-            private R b;
-
-            /**
-             * Creates a Tuple given its 2 objects.
-             * @param a The 1st object of this Tuple.
-             * @param b The 2nd object of this Tuple.
-             */
-            private Tuple(A a, R b) {
-                this.a = a;
-                this.b = b;
-            }
-
-        }//end local class Tuple
-
         //A template Record to obtain the Feature's' of this Table
         Record<T> templateRecord = this.records.get(0);
         return templateRecord.getFeatures()
@@ -340,6 +453,62 @@ public class Table<T> {
     }
 
     /**
+     * Calculates the weighted frequency of a given value of a Feature, in the
+     * Record's' of this Table.
+     * @param ftrTitle The title of the Feature the given value belongs to.
+     * @param value A value of the given Feature.
+     * @return The weighted frequency of a given value of a Feature, in the
+     * Record's' of this Table. If there are no Record's' with the given value,
+     * or the value does not belong in the value set of the given Feature,
+     * returns 0.
+     */
+    private double ftrValueWFreq(@NotNull String ftrTitle,
+            @NotNull Object value) {
+        //The sum of the weights of all the Record's' of this Table
+        final double WEIGHT_SUM = this.records
+                                      .parallelStream()
+                                      .mapToDouble(Record::getWeight)
+                                      .sum();
+
+        //Gets the Range's' of the given Feature
+        Set<SemiRange<?>> ranges = this.ranges.get(ftrTitle);
+        //Checks if the given Feature contains continuous values
+        if (ranges != null) {
+            //A variable to store a reference to the SemiRange containing value
+            SemiRange range = (SemiRange) value;
+            //Iterates over ranges to find the one that contains value
+            /*for (SemiRange r : ranges) {
+                //Checks if r contains value
+                if (r.contains((Comparable) value)) {
+                    //Store a reference to r
+                    range = r;
+                    //No need to continue iteration
+                    break;
+                }//end if
+            }//end for
+
+            //To make the compiler happy, for lambda use
+            final SemiRange RANGE = range;*/
+            return this.records
+                       .parallelStream()
+                       .filter(r -> range.contains(r.getFeatures()
+                                                    .get(ftrTitle)
+                                                    .getData()))
+                       .mapToDouble(Record::getWeight)
+                       .sum() / WEIGHT_SUM;
+        }//end if
+
+        return this.records
+                .parallelStream()
+                .filter(r -> r.getFeatures()
+                              .get(ftrTitle)
+                              .getData()
+                              .equals(value))
+                .mapToDouble(Record::getWeight)
+                .sum() / WEIGHT_SUM;
+    }
+
+    /**
      * Calculates the frequency of a given value of a Feature, in the Record's'
      * of this Table.
      * @param ftrTitle The title of the Feature the given value belongs to.
@@ -374,7 +543,7 @@ public class Table<T> {
         return this.records
                    .parallelStream()
                    .map(r -> r.getFeatures().get(ftrTitle).getData())
-                   .filter(e -> e.equals(value))
+                   .filter(value::equals)
                    .count();
     }
 
@@ -394,22 +563,25 @@ public class Table<T> {
         Set<SemiRange<?>> ranges = this.ranges.get(ftrTitle);
         //Checks if the given Feature contains continuous values
         if (ranges != null) {
+            //A Map with the the entropy of this Table, on its target variable, if
+            //split by each value in ftrValues
+            Map<Object, Double> entropies = new LinkedHashMap<>(ranges.size());
             //The information gain of splitting
             double infoGain = entropy;
             //Calculates the information gain
             for (SemiRange sr : ranges) {
-                //Calculates the relative frequency of the items that are
-                //contained in SemiRange sr
-                double relFreq = sr.isBoundInc() ? (this.records.size() + 2) /
-                        2.0 : this.records.size() - (this.records.size() + 2) /
-                        2.0;
-                //Subtracts the term of SemiRange sr from infoGain
-                infoGain -= relFreq * Table.weightedEntropy(
-                        this.records
-                            .parallelStream()
-                            .filter(r -> sr.contains(r.getFeatures()
-                                                      .get(ftrTitle)
-                                                      .getData())));
+                entropies.put(sr, Table.weightedEntropy(this.records
+                                 .parallelStream()
+                                 .filter(r -> sr.contains(r.getFeatures()
+                                                           .get(ftrTitle)
+                                                           .getData()))));
+            }//end for
+
+            //Calculates the information gain
+            for (Map.Entry<Object, Double> e : entropies.entrySet()) {
+                //Subtracts the term of e.getKey() from infoGain
+                infoGain -= this.ftrValueWFreq(ftrTitle, e.getKey()) *
+                        e.getValue();
             }//end for
 
             return infoGain;
@@ -436,8 +608,7 @@ public class Table<T> {
         //Calculates the information gain
         for (Map.Entry<Object, Double> e : entropies.entrySet()) {
             //Subtracts the term of e.getKey() from infoGain
-            infoGain -= ((double) this.ftrValueFreq(ftrTitle, e.getKey()) /
-                    this.records.size()) * e.getValue();
+            infoGain -= this.ftrValueWFreq(ftrTitle, e.getKey()) * e.getValue();
         }//end for
 
         return infoGain;
