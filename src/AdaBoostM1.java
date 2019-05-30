@@ -75,7 +75,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
         int tries = 50;
 
         //Populates classifiers List with Classifier's'
-        for (int modelNum = 1; modelNum <= maxModels && tries > 0; ++modelNum) {
+        while (classifiers.size() < maxModels && tries > 0) {
             //Gets a Classifier from Record's' records
             Classifier<Y> classifier = classifierGen.generate(records);
             //A Set with all the Record's' that classifier correctly predicted
@@ -83,8 +83,6 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
             Set<Record<Y>> correctRecords = records.stream()
                     .filter(classifier::isCorrect)
                     .collect(Collectors.toSet());
-            //System.out.println("RECORDS: " + records.size());
-            //System.out.println("CORRECT RECORDS: " + correctRecords.size());
             //The weighted error of Classifier classifier, at its prediction of
             //Record's' records
             double error = records.stream()
@@ -95,19 +93,19 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
             final double INV_WEIGHT = error / (1.0 - error);
             //Checks if error is greater than the threshold 0.5
             if (error > 0.5) {
-                //continue; //break;
+                //Lets try again
                 --tries;
+                if (tries < 1) {
+                    break;
+                }//end if
             } else {
                 //Adds classifier in classifiers List, along with prediction weight
                 classifiers.add(new AbstractMap.SimpleEntry<>(classifier, 1.0 /
                         INV_WEIGHT));
-            }//end if
-
-            //System.out.println("Error: " + error);
-
-            //Checks if there are no more models to build
-            if (modelNum == maxModels) {
-                break;
+                //Checks if there are no more models to build
+                if (classifiers.size() == maxModels) {
+                    break;
+                }//end if
             }//end if
 
             //Updates the weights of the Record's' in records Collection
@@ -115,17 +113,9 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                    .filter(correctRecords::contains)
                    .forEach(r -> r.setWeight(r.getWeight() * INV_WEIGHT));
 
-            /*records.forEach(r -> {
-                        System.out.println(correctRecords.contains(r));
-                        System.out.println(r.getWeight());
-                    });
-            System.out.println();
-            System.out.println();*/
-
             //Normalizes the Record's'
             normalize.accept(records);
-            //System.out.println("D: " + records.stream().distinct().count());
-        }//end for
+        }//end while
 
         //Validates that there is at least 1 weak classifier in classifiers List
         if (classifiers.isEmpty()) {
@@ -133,10 +123,6 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                     "classifiers.");
         }//end if
 
-        System.out.println("SIZE: " + classifiers.size());
-        System.out.println("Tries: " + tries);
-        //System.out.println("----------------------------------------------");
-        //System.out.println(classifiers.size());
         this.classifiers = classifiers;
     }
 
@@ -174,7 +160,6 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                             .mapToDouble(Map.Entry::getValue)
                             .map(w -> logb.apply(w, 2.0))
                             .sum()))
-                //.peek(System.out::println)
                    .max(Comparator.comparingDouble(Map.Entry::getValue))
                    .get()
                    .getKey();

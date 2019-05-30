@@ -126,6 +126,12 @@ public class DecisionTree<T> implements Classifier<T> {
             //Gets the value of the examined Feature in node, of record
             Comparable value = record.getFeatures().get(
                     node.getFtrTitle()).getData();
+
+            Node<T> temp = node.branch(value);
+            if (null == temp) {
+                break;
+            }//end if
+
             //The next Node to branch to, based on the value of the given Record
             //on the Feature examined by node
             node = node.branch(value);
