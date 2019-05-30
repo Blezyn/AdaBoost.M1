@@ -44,7 +44,7 @@ public class AdaHeartTest {
                 AdaHeartTest.constructRecords(header, trainStrRecords);
         //Creates a Classifier with the training records
         Classifier<String> dt = new AdaBoostM1<>(trainRecords,
-                DecisionStump::new, 20);
+                DecisionStump::new, 10);
 
         //A List with all the evaluation records
         List<List<String>> evalStrRecords =
