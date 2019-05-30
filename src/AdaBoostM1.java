@@ -70,9 +70,12 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                 new ArrayList<>(maxModels);
         //A Random instance to generate random values
         Random rand = new Random();
+        //How many times has tried to create a new Classifier, when an old one
+        //had > 0.5 error
+        int tries = 50;
 
         //Populates classifiers List with Classifier's'
-        for (int modelNum = 1; modelNum <= maxModels; ++modelNum) {
+        for (int modelNum = 1; modelNum <= maxModels && tries > 0; ++modelNum) {
             //Gets a Classifier from Record's' records
             Classifier<Y> classifier = classifierGen.generate(records);
             //A Set with all the Record's' that classifier correctly predicted
@@ -93,7 +96,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
             //Checks if error is greater than the threshold 0.5
             if (error > 0.5) {
                 //continue; //break;
-                ++maxModels;
+                --tries;
             } else {
                 //Adds classifier in classifiers List, along with prediction weight
                 classifiers.add(new AbstractMap.SimpleEntry<>(classifier, 1.0 /
@@ -131,6 +134,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
         }//end if
 
         System.out.println("SIZE: " + classifiers.size());
+        System.out.println("Tries: " + tries);
         //System.out.println("----------------------------------------------");
         //System.out.println(classifiers.size());
         this.classifiers = classifiers;
@@ -170,7 +174,7 @@ public class AdaBoostM1<Y> implements Classifier<Y> {
                             .mapToDouble(Map.Entry::getValue)
                             .map(w -> logb.apply(w, 2.0))
                             .sum()))
-                .peek(System.out::println)
+                //.peek(System.out::println)
                    .max(Comparator.comparingDouble(Map.Entry::getValue))
                    .get()
                    .getKey();
